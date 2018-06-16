@@ -5,6 +5,14 @@ import {
   fetchSixteenDayForecast
 } from './api';
 
+function getCurrentLocation(options) {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, ({code, message}) =>
+        reject(Object.assign(new Error(message), {name: "PositionError", code})),
+      options);
+  });
+};
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -18,31 +26,34 @@ class App extends Component {
     }
   }
 
-  fetchWeather() {
-    fetchCurrentWeather().then((response) => {
-      this.setState({
-        weather: {
-          ...this.state.weather,
-          current: response.data,
-        }
-      })
+  async fetchWeather() {
+    let location = false;
+    if ('geolocation' in navigator) {
+      try {
+        location = await getCurrentLocation();
+      } catch(e) {
+        location = false;
+      }
+    }
+
+    const [
+      current,
+      fiveDay,
+      sixteenDay
+    ] = await Promise.all([
+      fetchCurrentWeather(location).then(res => res.data),
+      fetchFiveDayForecast(location).then(res => res.data),
+      fetchSixteenDayForecast(location).then(res => res.data),
+    ]);
+
+    this.setState({
+      weather: {
+        ...this.state.weather,
+        current,
+        fiveDay,
+        sixteenDay,
+      }
     });
-    fetchFiveDayForecast().then((response) => {
-      this.setState({
-        weather: {
-          ...this.state.weather,
-          fiveDay: response.data,
-        }
-      })
-    });;
-    fetchSixteenDayForecast().then((response) => {
-      this.setState({
-        weather: {
-          ...this.state.weather,
-          sixteenDay: response.data,
-        }
-      })
-    });;
   }
 
   render() {
