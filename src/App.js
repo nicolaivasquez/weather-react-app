@@ -4,25 +4,9 @@ import {
   fetchWeather
 } from './actions';
 
-function getCurrentLocation(options) {
-  return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, ({code, message}) =>
-        reject(Object.assign(new Error(message), {name: "PositionError", code})),
-      options);
-  });
-};
-
 class App extends Component {
   constructor(props) {
     super(props);
-
-    this.state = {
-      weather: {
-        current: {},
-        fiveDay: {},
-        sixteenDay: {},
-      }
-    }
   }
 
   render() {
