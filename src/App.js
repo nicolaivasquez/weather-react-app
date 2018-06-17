@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import {
-  fetchCurrentWeather,
-  fetchFiveDayForecast,
-  fetchSixteenDayForecast
-} from './api';
+  fetchWeather
+} from './actions';
 
 function getCurrentLocation(options) {
   return new Promise((resolve, reject) => {
@@ -26,63 +25,58 @@ class App extends Component {
     }
   }
 
-  async fetchWeather() {
-    let location = false;
-    if ('geolocation' in navigator) {
-      try {
-        location = await getCurrentLocation();
-      } catch(e) {
-        location = false;
-      }
-    }
-
-    const [
-      current,
-      fiveDay,
-      sixteenDay
-    ] = await Promise.all([
-      fetchCurrentWeather(location).then(res => res.data),
-      fetchFiveDayForecast(location).then(res => res.data),
-      fetchSixteenDayForecast(location).then(res => res.data),
-    ]);
-
-    this.setState({
-      weather: {
-        ...this.state.weather,
-        current,
-        fiveDay,
-        sixteenDay,
-      }
-    });
-  }
-
   render() {
     return (
       <div>
         <button
-          onClick={this.fetchWeather.bind(this)}
+          onClick={this.props.handleFetchWeather}
         >Fetch Weather Data</button>
-        <div>
-          <h4>Current Weather</h4>
-          <div>
-            {JSON.stringify(this.state.weather.current)}
-          </div>
-        </div>
-        <div>
-          <h4>5 day forecast</h4>
-          <div>
-            {JSON.stringify(this.state.weather.fiveDay)}
-          </div>
-        </div>
-        <div>
-          <h4>16 day forecast</h4>
-          <div>
-            {JSON.stringify(this.state.weather.sixteenDay)}
-          </div>
-        </div>
+        {
+          this.props.loading &&
+            <h2>Loading ...</h2>
+        }
+        {
+          this.props.loading ||
+            <div>
+              <div>
+                <h4>Current Weather</h4>
+                <div>
+                  {JSON.stringify(this.props.current)}
+                </div>
+              </div>
+              <div>
+                <h4>5 day forecast</h4>
+                <div>
+                  {JSON.stringify(this.props.fiveDay)}
+                </div>
+              </div>
+              <div>
+                <h4>16 day forecast</h4>
+                <div>
+                  {JSON.stringify(this.props.sixteenDay)}
+                </div>
+              </div>
+            </div>
+        }
       </div>
     );
   }
 }
 
-export default App;
+const mapStateToProps = (state) => {
+  return {
+    ...state.weather,
+    loading: state.loading,
+  }
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    handleFetchWeather: () => dispatch(fetchWeather())
+  }
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(App);
